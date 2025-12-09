@@ -5,6 +5,8 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.*
+import kotlin.system.measureTimeMillis
 
 private const val NUMBERS_TO_FIND = 1_000_000
 
@@ -16,13 +18,10 @@ fun main(args: Array<String>) {
         primesPathName = args[0]
     }
 
-    println("primesPath: ${primesPathName}")
     val primesPath = File(primesPathName)
     val lastPrimeFileName = getLastPrimFile(primesPathName)
-    println("lastPrimeFileName: ${primesPathName}")
     val lastPrimeFile = File(lastPrimeFileName)
     val lastLine = readLastLine(lastPrimeFile)
-    println("lastLine: ${lastLine}")
     val lastPrime = BigInteger(lastLine!!)
 
     val primes = readKnownPrimes(primesPath)
@@ -39,6 +38,28 @@ fun main(args: Array<String>) {
 
     val sw = StopWatch()
     sw.start()
+
+
+    val n = 2_000_000
+    val chunkSize = 50_000
+    val ranges = (1..n step chunkSize).map { start ->
+        start until minOf(start + chunkSize, n)
+    }
+
+    val time = measureTimeMillis {
+        val results = ranges.map { range ->
+            async(Dispatchers.Default) {
+                range.filter { isPrime(it) }
+            }
+        }.awaitAll().flatten()
+
+        println("Gefundene Primzahlen: ${results.size}")
+    }
+
+    println("Dauer: ${time}ms")
+
+
+
 
     do {
         val numberToCheckIsPrime = isPrime(numberToCheck, primes)
