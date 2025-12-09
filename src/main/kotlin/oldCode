@@ -258,32 +258,32 @@ fun getJarPath(): String {
 //    return true // wahrscheinlich prim
 //}
 
-
-fun main2() {
-    val list1 = arrayListOf("Apple", "Banana", "Orange")
-    val list2 = arrayListOf("Apple", "Mango", "Peach")
-    val list3 = arrayListOf("Apple", "Grape", "Lemon")
-    val list4 = arrayListOf("Banana", "Cherry", "Kiwi")
-
-    val lists = listOf(list1, list2, list3, list4)
-    val iterators = lists.map { it.iterator() } // Iterator für jede Liste
-    val currentElements = iterators.map { if (it.hasNext()) it.next() else null }.toMutableList()
-    val result = mutableListOf<String>()
-
-    while (result.size < 1000) {
-        // Finde den kleinsten Wert unter den aktuellen Elementen
-        val minElement = currentElements.filterNotNull().minOrNull() ?: break
-        result.add(minElement)
-
-        // Ersetze das eingefügte Element durch das nächste Element der jeweiligen Liste
-        for (i in currentElements.indices) {
-            if (currentElements[i] == minElement && iterators[i].hasNext()) {
-                currentElements[i] = iterators[i].next()
-            } else if (currentElements[i] == minElement) {
-                currentElements[i] = null
-            }
-        }
-    }
-
-    println(result)
-}
+//
+//fun main2() {
+//    val list1 = arrayListOf("Apple", "Banana", "Orange")
+//    val list2 = arrayListOf("Apple", "Mango", "Peach")
+//    val list3 = arrayListOf("Apple", "Grape", "Lemon")
+//    val list4 = arrayListOf("Banana", "Cherry", "Kiwi")
+//
+//    val lists = listOf(list1, list2, list3, list4)
+//    val iterators = lists.map { it.iterator() } // Iterator für jede Liste
+//    val currentElements = iterators.map { if (it.hasNext()) it.next() else null }.toMutableList()
+//    val result = mutableListOf<String>()
+//
+//    while (result.size < 1000) {
+//        // Finde den kleinsten Wert unter den aktuellen Elementen
+//        val minElement = currentElements.filterNotNull().minOrNull() ?: break
+//        result.add(minElement)
+//
+//        // Ersetze das eingefügte Element durch das nächste Element der jeweiligen Liste
+//        for (i in currentElements.indices) {
+//            if (currentElements[i] == minElement && iterators[i].hasNext()) {
+//                currentElements[i] = iterators[i].next()
+//            } else if (currentElements[i] == minElement) {
+//                currentElements[i] = null
+//            }
+//        }
+//    }
+//
+//    println(result)
+//}
