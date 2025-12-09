@@ -1,0 +1,289 @@
+//    for (i in 4..50) {
+//        convertNumbersFile(
+//            "C:\\Users\\schue\\IdeaProjects\\maven\\big-prime-db\\src\\main\\resources\\primes" + i.toString() + ".txt",
+//            "C:\\Users\\schue\\IdeaProjects\\maven\\big-prime-db\\src\\main\\resources\\primes" + i.toString() + "_new.txt")
+//    }
+
+
+//    val filePath = "C:\\Users\\schue\\IdeaProjects\\maven\\big-prime-db\\src\\main\\resources\\primes.txt"
+//    val position = 30_000_000L
+//    val length = 30
+//
+//    val bytes = readBytesFromFile(filePath, position, length)
+//    val text = bytes.toString(Charsets.UTF_8)
+//
+//    println("Gelesene Bytes:\n${text}")
+
+
+//
+//    val primes = mutableListOf(
+//        2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73,
+//        79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157,
+//        163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239,
+//        241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331,
+//        337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421,
+//        431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509,
+//        521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613,
+//        617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709,
+//        719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821,
+//        823, 827, 829, 839, 853, 857, 859, 863, 877, 881, 883, 887, 907, 911, 919,
+//        929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997, 1009
+//    );
+//
+//    for (i in 1_000_000..1_010_000) {
+//        val isPrime = isPrimeWithKnownPrimes(i, primes)
+//        if (isPrime)
+//            println(i)
+//    }
+
+fun isPrimeWithKnownPrimes(n: Int, knownPrimes: List<Int>): Boolean {
+
+    if (n < 2) return false
+
+    if (knownPrimes.isEmpty() || knownPrimes.last() * knownPrimes.last() < n) {
+        throw IllegalArgumentException("Liste der bekannten Primzahlen ist zu klein!")
+    }
+
+    for (p in knownPrimes) {
+        if (p * p > n) break
+        if (n % p == 0) return false
+    }
+    return true
+}
+
+fun readBytesFromFile(filePath: String, position: Long, length: Int): ByteArray {
+
+    RandomAccessFile(filePath, "r").use { raf ->
+        raf.seek(position)
+        val buffer = ByteArray(length)
+        val bytesRead = raf.read(buffer)
+        return if (bytesRead == -1) ByteArray(0) else buffer.copyOf(bytesRead)
+    }
+}
+
+fun convertNumbersFile(inputFilePath: String, outputFilePath: String) {
+    val inputFile = File(inputFilePath)
+    val outputFile = File(outputFilePath)
+
+    val numbers = inputFile.readLines()
+        .flatMap { it.trim().split(Regex("\\s+")) } // Spaltet jede Zeile an Whitespaces
+        .filter { it.isNotEmpty() }
+
+    outputFile.printWriter().use { writer ->
+        numbers.forEach { writer.println(it) }
+    }
+}
+
+fun readPrimesFromResources(): List<BigInteger> {
+
+    val primes = ArrayList<BigInteger>(10_000_000)
+    val resourceFiles = listOf(
+        "primes1.prim",
+        "primes2.prim"
+        )
+
+    for (file in resourceFiles) {
+        Thread.currentThread().contextClassLoader.getResourceAsStream(file)?.use { stream ->
+            BufferedReader(InputStreamReader(stream)).use { reader ->
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    val number = BigInteger(line!!.trim())
+                    primes.add(number)
+                }
+            }
+        }
+    }
+
+    return primes
+}
+
+
+fun getJarPath(): String {
+    // Holt den Pfad der Klasse
+    //val path = this::class.java.protectionDomain.codeSource.location.path
+    val path = object {}.javaClass.protectionDomain.codeSource.location.path
+
+    // URL-dekodieren (für Leerzeichen, Sonderzeichen etc.)
+    val decodedPath = URLDecoder.decode(path, "UTF-8")
+    // Aus dem Pfad eine Datei machen und Normalisieren
+    return File(decodedPath).absolutePath
+}
+
+
+
+
+
+
+// ----------------------------------------------------------
+
+    val cores = Runtime.getRuntime().availableProcessors()
+    val pool = Executors.newFixedThreadPool(cores)
+
+    val workQueue: BlockingQueue<BigInteger> = LinkedBlockingQueue()
+    val results = ConcurrentLinkedQueue<BigInteger>()
+
+    val targetCount = 100_000
+    val file = File("D:\\Primes\\primes_000000051_parallel.prim")
+
+    val sw = StopWatch()
+    sw.start()
+
+    // ----------------------------------
+    // Producer-Thread: Füllt Zahlen nach
+    // ----------------------------------
+    Thread {
+        var n = lastPrime + BigInteger.TWO
+        while (true) {
+            workQueue.put(n)
+            n += BigInteger.TWO
+
+            if (workQueue.count() > 100_000) {
+                Thread.sleep(Duration.ofSeconds(1))
+            }
+        }
+    }.start()
+
+    // -----------------------------------
+    // Worker-Threads: Prüfen auf Primzahl
+    // -----------------------------------
+    repeat(cores) {
+        pool.submit {
+            while (results.size < targetCount) {
+                val n = workQueue.take()
+                if (isPrime(n, primes)) {
+                    results.add(n)
+                }
+            }
+        }
+    }
+
+    pool.shutdown()
+    pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
+
+    println("Suche beendet. Schreiben in Datei wird gestartet...")
+
+    FileWriter(file, true).use { w ->
+        results.sorted().forEach { w.write(it.toString() + "\n") }
+    }
+    sw.stop()
+    println("Zeit für 1.000.000 Primzahlen: ${sw.elapsedTimeMillis()} ms")
+
+    //    // -----------------------------
+    //    // Consumer-Thread: schreibt Ergebnisse in Datei
+    //    // -----------------------------
+    //    Thread {
+    //        val buffer = mutableListOf<BigInteger>()
+    //        while (results.size == targetCount) {
+    //            val n = results.poll()
+    //            if (n != null) {
+    //                buffer.add(n)
+    ////                if (buffer.size >= 1_000_000) {
+    //                    FileWriter(file, true).use { w ->
+    //                        buffer.sorted().forEach { w.write(it.toString() + "\n") }
+    //                    }
+    //                    buffer.clear()
+    ////                }
+    //            }
+    ////            else {
+    ////                Thread.sleep(50)
+    ////            }
+    //        }
+    //
+    //        sw.stop()
+    //        println("Zeit für 1.000.000 Primzahlen: ${sw.elapsedTimeMillis()} ms")
+    //    }.start()
+
+
+
+//fun isProbablePrime(n: BigInteger, k: Int = 5): Boolean {
+//
+//    // 0, 1 und negative Zahlen sind nicht prim
+//    if (n <= BigInteger.ONE) {
+//        return false
+//    }
+//
+//    // 2 und 3 sind prim
+//    if (n == BigInteger.TWO || n == BigInteger.valueOf(3)) {
+//        return true
+//    }
+//
+//    // gerade Zahlen sind nicht prim
+//    if (n.mod(BigInteger.TWO) == BigInteger.ZERO) {
+//        return false
+//    }
+//
+//    // Zerlege n-1 = 2^s * d mit d ungerade
+//    var d = n - BigInteger.ONE
+//    var s = 0
+//    while (d.mod(BigInteger.TWO) == BigInteger.ZERO) {
+//        d = d.shiftRight(1) // d /= 2
+//        s++
+//    }
+//
+//    val random = SecureRandom()
+//
+//    // k Wiederholungen mit zufälligen Basen
+//    repeat(k) {
+//        // wähle zufälliges a in [2, n-2]
+//        val a = BigInteger(n.bitLength(), random)
+//            .mod(n - BigInteger.TWO) + BigInteger.TWO
+//
+//        // x = a^d mod n
+//        var x = a.modPow(d, n)
+//
+//        if (x == BigInteger.ONE || x == n - BigInteger.ONE) {
+//            // diese Runde bestanden
+//            return@repeat
+//        }
+//
+//        var continueWitnessLoop = false
+//        for (r in 1 until s) {
+//            x = x.modPow(BigInteger.TWO, n)
+//
+//            if (x == n - BigInteger.ONE) {
+//                continueWitnessLoop = true
+//                break
+//            }
+//
+//            if (x == BigInteger.ONE) {
+//                return false // sicher zusammengesetzt
+//            }
+//        }
+//
+//        if (!continueWitnessLoop) {
+//            return false // sicher zusammengesetzt
+//        }
+//    }
+//
+//    return true // wahrscheinlich prim
+//}
+
+
+fun main2() {
+    val list1 = arrayListOf("Apple", "Banana", "Orange")
+    val list2 = arrayListOf("Apple", "Mango", "Peach")
+    val list3 = arrayListOf("Apple", "Grape", "Lemon")
+    val list4 = arrayListOf("Banana", "Cherry", "Kiwi")
+
+    val lists = listOf(list1, list2, list3, list4)
+    val iterators = lists.map { it.iterator() } // Iterator für jede Liste
+    val currentElements = iterators.map { if (it.hasNext()) it.next() else null }.toMutableList()
+    val result = mutableListOf<String>()
+
+    while (result.size < 1000) {
+        // Finde den kleinsten Wert unter den aktuellen Elementen
+        val minElement = currentElements.filterNotNull().minOrNull() ?: break
+        result.add(minElement)
+
+        // Ersetze das eingefügte Element durch das nächste Element der jeweiligen Liste
+        for (i in currentElements.indices) {
+            if (currentElements[i] == minElement && iterators[i].hasNext()) {
+                currentElements[i] = iterators[i].next()
+            } else if (currentElements[i] == minElement) {
+                currentElements[i] = null
+            }
+        }
+    }
+
+    println(result)
+}

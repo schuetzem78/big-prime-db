@@ -1,0 +1,35 @@
+100.000 Primzahlen finden ab: 982.451.653 (die 50.000.000-ste Primzahl
+
+Versuch 1: sequenziell, Division durch bekannte Primzahlen
+ - 23.230 ms
+ - 23.130 ms
+ - 23.226 ms
+
+Versuch 2: sequenziell, vorgelagerter Miller-Rabin-Test (k = 20) und danach Division durch bekannte Primzahlen
+ - 29.218 ms
+ - 29.249 ms
+ - 29.495 ms
+
+Versuch 3: parallel,  Division durch bekannte Primzahlen
+ - 42.088 ms
+
+
+Versuch 4: parallel, vorgelagerter Miller-Rabin-Test und danach Division durch bekannte Primzahlen
+
+
+
+100 Primzahlen finden ab: 999.999.990.729.253
+Versuch 1: sequenziell, Division durch bekannte Primzahlen
+ - 12.668 ms
+ - 13.116 ms
+ - 13.190 ms
+
+Versuch 2: sequenziell, vorgelagerter Miller-Rabin-Test (k = 20) und danach Division durch bekannte Primzahlen
+ - 12.666 ms
+ - 12.719 ms
+ - 12.715 ms
+
+Versuch 2: sequenziell, vorgelagerter Miller-Rabin-Test (k = 5) und danach Division durch bekannte Primzahlen
+ - 12.457 ms
+ - 12.455 ms
+ - 12.687 ms
