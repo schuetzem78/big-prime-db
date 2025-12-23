@@ -134,7 +134,10 @@ fun readKnownPrimes(primesPath: File): List<BigInteger> {
     val primes = ArrayList<BigInteger>(10_000_000)
     val knownPrimeFiles = listOf(
         "primes_000000001.prim",
-        "primes_000000002.prim")
+        "primes_000000002.prim",
+        "primes_000000003.prim",
+        "primes_000000004.prim",
+        "primes_000000005.prim")
 
     for (knownPrimeFileName in knownPrimeFiles) {
 
