@@ -19,7 +19,7 @@ fun main(args: Array<String>) {
     println("primesPath: ${primesPathName}")
     val primesPath = File(primesPathName)
     val lastPrimeFileName = getLastPrimFile(primesPathName)
-    println("lastPrimeFileName: ${primesPathName}")
+    println("lastPrimeFileName: ${lastPrimeFileName}")
     val lastPrimeFile = File(lastPrimeFileName)
     val lastLine = readLastLine(lastPrimeFile)
     println("lastLine: ${lastLine}")
