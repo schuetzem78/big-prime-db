@@ -47,7 +47,7 @@ fun main(args: Array<String>) {
         sw.start()
 
         do {
-            val numberToCheckIsPrime = isPrime(numberToCheck, primes)
+            val numberToCheckIsPrime = PrimeChecker.isPrime(numberToCheck, primes)
 
             if (numberToCheckIsPrime) {
                 countOfFoundPrimes++
@@ -117,6 +117,7 @@ fun getLastPrimFile(path: String): String {
 }
 
 fun readLastLine(file: File): String? {
+
     RandomAccessFile(file, "r").use { raf ->
         val length = raf.length()
         if (length == 0L) return null
@@ -156,21 +157,4 @@ fun readKnownPrimes(primesPath: File): List<BigInteger> {
     }
 
     return primes
-}
-
-fun isPrime(n: BigInteger, knownPrimes: List<BigInteger>): Boolean {
-
-    if (n < BigInteger.TWO) return false
-
-    if (knownPrimes.isEmpty() || knownPrimes.last().multiply(knownPrimes.last()) < n) {
-        println("Liste der bekannten Primzahlen ist zu klein!")
-        throw IllegalArgumentException("Liste der bekannten Primzahlen ist zu klein!")
-    }
-
-    for (p in knownPrimes) {
-        if (p.multiply(p) > n) break
-        if (n.mod(p) == BigInteger.ZERO) return false
-    }
-
-    return true
 }
