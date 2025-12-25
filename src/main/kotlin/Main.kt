@@ -10,70 +10,77 @@ private const val NUMBERS_TO_FIND = 1_000_000
 
 fun main(args: Array<String>) {
 
-    var  primesPathName = "D:\\Primes"
+    var knownPrimesPath: String
+    var primesPathName: String
 
-    if (args.isNotEmpty()) {
-        primesPathName = args[0]
+    if (args.size != 2) {
+        println("Die Parameter <knownPrimesPath> und <foundPrimesPath> müssen angegeben werden.");
+        System.exit(-1)
+        return
+    } else {
+        knownPrimesPath = args[0]
+        primesPathName = args[1]
     }
 
-    println("primesPath: ${primesPathName}")
+    println("primesPath: $primesPathName")
     val primesPath = File(primesPathName)
     val lastPrimeFileName = getLastPrimFile(primesPathName)
-    println("lastPrimeFileName: ${lastPrimeFileName}")
+    println("lastPrimeFileName: $lastPrimeFileName")
     val lastPrimeFile = File(lastPrimeFileName)
     val lastLine = readLastLine(lastPrimeFile)
-    println("lastLine: ${lastLine}")
+    println("lastLine: $lastLine")
     val lastPrime = BigInteger(lastLine!!)
-
-    val primes = readKnownPrimes(primesPath)
-
-    var countOfFoundPrimes = 0
+    val primes = readKnownPrimes(File(knownPrimesPath))
+    var fileNumber = getFileNumber(lastPrimeFile.name)
     var numberToCheck = lastPrime.add(BigInteger.TWO)
 
-    var fileNumber = getFileNumber(lastPrimeFile.name)
-    fileNumber++
-
-    val outputFileName = getFileName(fileNumber)
-    val outputFile = primesPath.resolve(outputFileName)
-    val foundPrimes = ArrayList<String>()
-
-    val sw = StopWatch()
-    sw.start()
-
     do {
-        val numberToCheckIsPrime = isPrime(numberToCheck, primes)
+        var countOfFoundPrimes = 0
 
-        if (numberToCheckIsPrime) {
-            countOfFoundPrimes++
-            foundPrimes.add(numberToCheck.toString())
+        fileNumber++
 
-            if (foundPrimes.size % 10_000 == 0) {
-                // alle 10.000 gefundenen Primzahlen einen Punkt schreiben
-                print(".")
+        val outputFileName = getFileName(fileNumber)
+        val outputFile = primesPath.resolve(outputFileName)
+        val foundPrimes = ArrayList<String>()
+
+        val sw = StopWatch()
+        sw.start()
+
+        do {
+            val numberToCheckIsPrime = PrimeChecker.isPrime(numberToCheck, primes)
+
+            if (numberToCheckIsPrime) {
+                countOfFoundPrimes++
+                foundPrimes.add(numberToCheck.toString())
+
+                if (foundPrimes.size % 10_000 == 0) {
+                    // alle 10.000 gefundenen Primzahlen einen Punkt schreiben
+                    print(".")
+                }
+            }
+
+            numberToCheck = numberToCheck.add(BigInteger.TWO);
+        } while (countOfFoundPrimes < NUMBERS_TO_FIND)
+
+        sw.stop()
+
+        println()
+
+        val duration: Duration = sw.elapsedTimeMillis().milliseconds
+
+        println("Zeit für ${NumberFormat.getNumberInstance(Locale.GERMANY).format(NUMBERS_TO_FIND)} Primzahlen: ${duration.inWholeMinutes} m")
+
+        //schreibe alle gefundenen Primzahlen in die "Output"-Datei
+        outputFile.bufferedWriter().use { writer ->
+            for ((index, line) in foundPrimes.withIndex()) {
+                writer.write(line)
+                // nur Zeilenumbruch schreiben, wenn es nicht die letzte Zeile ist
+                if (index < foundPrimes.size - 1) {
+                    writer.write("\n")
+                }
             }
         }
-
-        numberToCheck = numberToCheck.add(BigInteger.TWO);
-    } while (countOfFoundPrimes < NUMBERS_TO_FIND)
-
-    sw.stop()
-
-    println()
-
-    val duration: Duration = sw.elapsedTimeMillis().milliseconds
-
-    println("Zeit für ${NumberFormat.getNumberInstance(Locale.GERMANY).format(NUMBERS_TO_FIND)} Primzahlen: ${duration.inWholeMinutes} m")
-
-    //schreibe alle gefundenen Primzahlen in die "Output"-Datei
-    outputFile.bufferedWriter().use { writer ->
-        for ((index, line) in foundPrimes.withIndex()) {
-            writer.write(line)
-            // nur Zeilenumbruch schreiben, wenn es nicht die letzte Zeile ist
-            if (index < foundPrimes.size - 1) {
-                writer.write("\n")
-            }
-        }
-    }
+    } while (true)
 }
 
 fun getFileNumber(fileName: String): Int {
@@ -110,6 +117,7 @@ fun getLastPrimFile(path: String): String {
 }
 
 fun readLastLine(file: File): String? {
+
     RandomAccessFile(file, "r").use { raf ->
         val length = raf.length()
         if (length == 0L) return null
@@ -134,7 +142,10 @@ fun readKnownPrimes(primesPath: File): List<BigInteger> {
     val primes = ArrayList<BigInteger>(10_000_000)
     val knownPrimeFiles = listOf(
         "primes_000000001.prim",
-        "primes_000000002.prim")
+        "primes_000000002.prim",
+        "primes_000000003.prim",
+        "primes_000000004.prim",
+        "primes_000000005.prim")
 
     for (knownPrimeFileName in knownPrimeFiles) {
 
@@ -146,21 +157,4 @@ fun readKnownPrimes(primesPath: File): List<BigInteger> {
     }
 
     return primes
-}
-
-fun isPrime(n: BigInteger, knownPrimes: List<BigInteger>): Boolean {
-
-    if (n < BigInteger.TWO) return false
-
-    if (knownPrimes.isEmpty() || knownPrimes.last().multiply(knownPrimes.last()) < n) {
-        println("Liste der bekannten Primzahlen ist zu klein!")
-        throw IllegalArgumentException("Liste der bekannten Primzahlen ist zu klein!")
-    }
-
-    for (p in knownPrimes) {
-        if (p.multiply(p) > n) break
-        if (n.mod(p) == BigInteger.ZERO) return false
-    }
-
-    return true
 }
